@@ -20,7 +20,7 @@ public class CategoryDTO implements Serializable{ // transformar objeto em byte
 	
 	public CategoryDTO(Category entity)
 	{
-		this.id= entity.getId();
+		this.id=entity.getId();
 		this.name=entity.getName();
 	}
 
