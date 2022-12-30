@@ -4,11 +4,16 @@ import java.util.Set;
 
 import javax.persistence.EntityNotFoundException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,28 +29,30 @@ import com.rodri.dscatalog.services.exceptions.DataBaseException;
 import com.rodri.dscatalog.services.exceptions.ResourceNotFoundException;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService{
+	
+	private static Logger logger = LoggerFactory.getLogger(UserService.class);
 	
 	@Autowired
 	private BCryptPasswordEncoder passwordEncoder;
 	
 	@Autowired
-	private UserRepository productRep;
+	private UserRepository userRep;
 	
 	@Autowired
-	private RoleRepository userRep;
+	private RoleRepository roleRep;
 	
 	@Transactional(readOnly=true)
 	public Page<UserDTO> findAllPaged(Pageable pageable)
 	{
-		return productRep.findAll(pageable).map(x -> new UserDTO(x));
+		return userRep.findAll(pageable).map(x -> new UserDTO(x));
 		//return repository.findAll(pageRequest).stream().map(x -> new UserDTO(x)).collect(Collectors.toList());
 	}
 	
 	@Transactional(readOnly=true)
 	public UserDTO findById(Long id) 
 	{
-		User entity = productRep.findById(id).orElseThrow(() -> new ResourceNotFoundException("Entity not found"));
+		User entity = userRep.findById(id).orElseThrow(() -> new ResourceNotFoundException("Entity not found"));
 		return new UserDTO(entity);
 	}
 	
@@ -60,7 +67,7 @@ public class UserService {
 	public UserDTO update(Long id, UserUpdateDTO dto) {
 		try
 		{ 
-			User entity = productRep.getOne(id);
+			User entity = userRep.getOne(id);
 			return saveEntity(entity,dto);  // ou getReferenceById
 		} 
 		catch(EntityNotFoundException e) { throw new ResourceNotFoundException("Id not found "+id); }
@@ -69,7 +76,7 @@ public class UserService {
 	public void delete(Long id) {
 		try
 		{
-			productRep.deleteById(id);
+			userRep.deleteById(id);
 		}
 		catch(EmptyResultDataAccessException e){throw new ResourceNotFoundException("Id not found " +id);}
 		catch(DataIntegrityViolationException e) {throw new DataBaseException("Integrity violation");}
@@ -83,8 +90,20 @@ public class UserService {
 		
 		Set<Role> roles = entity.getRoles();
 		roles.clear();
-		dto.getRoles().forEach(role -> roles.add(userRep.getOne(role.getId())));
+		dto.getRoles().forEach(role -> roles.add(roleRep.getOne(role.getId())));
 		
-		return new UserDTO(productRep.save(entity));
+		return new UserDTO(userRep.save(entity));
+	}
+
+	@Override
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		User user = userRep.findByEmail(username);
+		if(user == null) 
+		{
+			logger.error("User not found: " + username);
+			throw new UsernameNotFoundException("Email not found");
+		}
+		logger.info("User found: " + username);
+		return user;
 	}
 }
