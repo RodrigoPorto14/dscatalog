@@ -57,7 +57,7 @@ public class ProductServiceIT {
 	public void findAllPagedShouldReturnPageWhenPageExist()
 	{
 		PageRequest pageRequest = PageRequest.of(0, 10);
-		Page<ProductDTO> result = service.findAllPaged(pageRequest);
+		Page<ProductDTO> result = service.findAllPaged(0L,"",pageRequest);
 		Assertions.assertFalse(result.isEmpty());
 		Assertions.assertEquals(0, result.getNumber());
 		Assertions.assertEquals(10,result.getSize());
@@ -68,7 +68,7 @@ public class ProductServiceIT {
 	public void findAllPagedShouldReturnEmptyPageWhenPageDoesNotExist()
 	{
 		PageRequest pageRequest = PageRequest.of(50, 10);
-		Page<ProductDTO> result = service.findAllPaged(pageRequest);
+		Page<ProductDTO> result = service.findAllPaged(0L,"",pageRequest);
 		Assertions.assertTrue(result.isEmpty());
 	}
 	
@@ -76,7 +76,7 @@ public class ProductServiceIT {
 	public void findAllPagedShouldReturnSortedPageWhenSortByName()
 	{
 		PageRequest pageRequest = PageRequest.of(0, 10, Sort.by("name"));
-		Page<ProductDTO> result = service.findAllPaged(pageRequest);
+		Page<ProductDTO> result = service.findAllPaged(0L,"",pageRequest);
 		for(int i=0; i<result.getSize()-1; i++)
 		{
 			String before = result.getContent().get(i).getName();

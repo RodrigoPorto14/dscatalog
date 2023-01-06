@@ -1,5 +1,7 @@
 package com.rodri.dscatalog.services;
 
+import static org.mockito.ArgumentMatchers.any;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +22,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
 import com.rodri.dscatalog.dto.ProductDTO;
 import com.rodri.dscatalog.entities.Category;
 import com.rodri.dscatalog.entities.Product;
@@ -58,10 +61,11 @@ public class ProductServiceTests {
 		category = Factory.createCategory();
 		page = new PageImpl<>(List.of(product));
 		
-		Mockito.when(productRep.findAll((Pageable)ArgumentMatchers.any())).thenReturn(page);
-		Mockito.when(productRep.save(ArgumentMatchers.any())).thenReturn(product);
+		Mockito.when(productRep.findAll((Pageable)any())).thenReturn(page);
+		Mockito.when(productRep.save(any())).thenReturn(product);
 		Mockito.when(productRep.findById(existingId)).thenReturn(Optional.of(product));
 		Mockito.when(productRep.findById(nonExistingId)).thenReturn(Optional.empty());
+		Mockito.when(productRep.find(any(),any(),any())).thenReturn(page);
 		Mockito.when(productRep.getOne(existingId)).thenReturn(product);
 		Mockito.when(productRep.getOne(nonExistingId)).thenThrow(EntityNotFoundException.class);
 		Mockito.when(categoryRep.getOne(existingId)).thenReturn(category);
@@ -75,9 +79,8 @@ public class ProductServiceTests {
 	public void findAllPagedShouldReturnPage()
 	{
 		Pageable pageable = PageRequest.of(0, 10);
-		Page<ProductDTO> result = service.findAllPaged(pageable);
+		Page<ProductDTO> result = service.findAllPaged(0L,"",pageable);
 		Assertions.assertNotNull(result);
-		Mockito.verify(productRep).findAll(pageable);
 	}
 	
 	@Test
